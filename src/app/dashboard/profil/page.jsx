@@ -4,12 +4,22 @@ import Sidebar from '@/components/Sidebar'
 import DashboardHeader from '@/components/Header'
 import { useState, useEffect } from 'react'
 import { Eye, Target } from 'lucide-react'
-import EditKepalaDesaModal from '@/component/KepalaDesaModal'
+import EditKepalaDesaModal from '@/components/KepalaDesaModal'
+import EditVisiMisiModal from '@/components/VisiMisiModal'
+import EditSejarahModal from '@/components/SejarahModal'
+import EditStrukturModal from '@/components/StrukturModal'
+import { supabase } from '@/lib/supabaseClient'
+import { Loader2 } from 'lucide-react'
 
 export default function ProfilDesaPage() {
     const [activeTab, setActiveTab] = useState('kepala')
     const [profilData, setProfilData] = useState(null)
     const [editModalOpen, setEditModalOpen] = useState(false)
+    const [editVisiModalOpen, setEditVisiModalOpen] = useState(false)
+    const [editSejarahModalOpen, setEditSejarahModalOpen] = useState(false)
+    const [editStrukturModalOpen, setEditStrukturModalOpen] = useState(false)
+    const [showStruktur, setShowStruktur] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
     const [formData, setFormData] = useState({
         nama_kepala_desa: '',
         jabatan_kepala_desa: '',
@@ -32,20 +42,93 @@ export default function ProfilDesaPage() {
                 setProfilData(data)
             } catch (err) {
                 console.error('Gagal mengambil data profil:', err)
+            } finally {
+                setIsLoading(false)
             }
         }
 
         fetchData()
     }, [])
 
-    function handleSubmit() {
-        // sementara belum connect backend
-        console.log('Submit form data:', formData)
-        setEditModalOpen(false)
+    async function handleSubmit() {
+        try {
+            let payload = {}
+
+            if (activeTab === 'kepala') {
+                let imageUrl = profilData.foto_kades
+
+                if (formData.foto_kades instanceof File) {
+                    const ext = formData.foto_kades.name.split('.').pop()
+                    const filePath = `foto_kades/kepala-desa.${ext}`
+
+                    const { error } = await supabase.storage
+                        .from('cms-desa-cikelat')
+                        .upload(filePath, formData.foto_kades, { upsert: true })
+
+                    if (error) throw error
+
+                    imageUrl = `https://peyguzipkiygkphndgpk.supabase.co/storage/v1/object/public/cms-desa-cikelat/${filePath}`
+                }
+
+                payload = {
+                    nama_kepala_desa: formData.nama_kepala_desa,
+                    jabatan_kepala_desa: formData.jabatan_kepala_desa,
+                    sambutan: formData.sambutan,
+                    foto_kades: imageUrl,
+                }
+            } else if (activeTab === 'visi') {
+                payload = {
+                    visi: formData.visi,
+                    misi: formData.misi,
+                }
+            } else if (activeTab === 'sejarah') {
+                payload = {
+                    sejarah: formData.sejarah,
+                }
+            } else if (activeTab === 'struktur') {
+                let strukturUrl = profilData.struktur_organisasi
+
+                if (formData.struktur_organisasi instanceof File) {
+                    const ext = formData.struktur_organisasi.name.split('.').pop()
+                    const filePath = `struktur/struktur-organisasi.${ext}`
+
+                    const { error } = await supabase.storage
+                        .from('cms-desa-cikelat')
+                        .upload(filePath, formData.struktur_organisasi, { upsert: true })
+
+                    if (error) throw error
+
+                    strukturUrl = `https://peyguzipkiygkphndgpk.supabase.co/storage/v1/object/public/cms-desa-cikelat/${filePath}`
+                }
+
+                payload = {
+                    struktur_organisasi: strukturUrl,
+                    nama_organisasi: formData.nama_organisasi,
+                    periode_struktur: formData.periode_struktur,
+                }
+            }
+
+            const res = await fetch('/api/profil', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            })
+
+            if (!res.ok) throw new Error('Gagal menyimpan data.')
+
+            setEditModalOpen(false)
+            setEditVisiModalOpen(false)
+            setEditSejarahModalOpen(false)
+            setEditStrukturModalOpen(false)
+            window.location.reload()
+        } catch (err) {
+            console.error('Gagal menyimpan:', err)
+            alert('Terjadi kesalahan saat menyimpan data.')
+        }
     }
 
     return (
-        <div className="flex min-h-screen bg-gray-100">
+        <div className="flex min-h-screen bg-gray-100 ml-64">
             <Sidebar />
             <main className="flex-1">
                 <DashboardHeader title="Profil Desa" />
@@ -96,7 +179,7 @@ export default function ProfilDesaPage() {
                                                 <div className="w-full md:w-56 flex-shrink-0">
                                                     <div className="w-56 h-56 rounded-full overflow-hidden shadow-md">
                                                         <img
-                                                            src={profilData.foto_kades || '/img/kepala-desa.jpg'}
+                                                            src={`${profilData.foto_kades || '/img/kepala-desa.jpg'}?t=${new Date().getTime()}`}
                                                             alt="Kepala Desa"
                                                             className="w-full h-full object-cover"
                                                         />
@@ -130,10 +213,20 @@ export default function ProfilDesaPage() {
                                         <div className="flex flex-col gap-4">
                                             <div className="flex justify-between items-center">
                                                 <h3 className="text-lg font-semibold text-gray-800">Visi & Misi Desa</h3>
-                                                <button className="bg-[#129990]/20 text-[#129990] hover:bg-[#129990] hover:text-white px-4 py-2 rounded-md transition font-medium">
+                                                <button
+                                                    onClick={() => {
+                                                        setFormData({
+                                                            visi: profilData.visi || '',
+                                                            misi: profilData.misi || '',
+                                                        })
+                                                        setEditVisiModalOpen(true)
+                                                    }}
+                                                    className="bg-[#129990]/20 text-[#129990] hover:bg-[#129990] hover:text-white px-4 py-2 rounded-md transition font-medium"
+                                                >
                                                     Edit Data
                                                 </button>
                                             </div>
+
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 shadow-sm">
@@ -151,15 +244,22 @@ export default function ProfilDesaPage() {
                                                         <Target className="w-6 h-6 text-green-600" />
                                                         <h4 className="text-green-800 font-semibold text-lg">Misi</h4>
                                                     </div>
-                                                    <ul className="list-disc list-inside text-sm text-green-900 space-y-1">
+                                                    <div className="space-y-2 text-sm text-green-900">
                                                         {(profilData.misi || '')
                                                             .split('\n')
                                                             .map((item, index) => (
-                                                                <li key={index}>{item}</li>
+                                                                <p key={index}>{item}</p>
                                                             ))}
-                                                    </ul>
+                                                    </div>
                                                 </div>
                                             </div>
+                                            <EditVisiMisiModal
+                                                isOpen={editVisiModalOpen}
+                                                onClose={() => setEditVisiModalOpen(false)}
+                                                formData={formData}
+                                                setFormData={setFormData}
+                                                onSubmit={handleSubmit}
+                                            />
                                         </div>
                                     )}
 
@@ -167,7 +267,15 @@ export default function ProfilDesaPage() {
                                         <div className="flex flex-col gap-4">
                                             <div className="flex justify-between items-center">
                                                 <h3 className="text-lg font-semibold text-gray-800">Sejarah Desa</h3>
-                                                <button className="bg-[#129990]/20 text-[#129990] hover:bg-[#129990] hover:text-white px-4 py-2 rounded-md transition font-medium">
+                                                <button
+                                                    onClick={() => {
+                                                        setFormData({
+                                                            sejarah: profilData.sejarah || '',
+                                                        })
+                                                        setEditSejarahModalOpen(true)
+                                                    }}
+                                                    className="bg-[#129990]/20 text-[#129990] hover:bg-[#129990] hover:text-white px-4 py-2 rounded-md transition font-medium"
+                                                >
                                                     Edit Data
                                                 </button>
                                             </div>
@@ -177,6 +285,14 @@ export default function ProfilDesaPage() {
                                                     {profilData.sejarah || 'Sejarah belum tersedia.'}
                                                 </p>
                                             </div>
+                                            <EditSejarahModal
+                                                isOpen={editSejarahModalOpen}
+                                                onClose={() => setEditSejarahModalOpen(false)}
+                                                formData={formData}
+                                                setFormData={setFormData}
+                                                onSubmit={handleSubmit}
+                                            />
+
                                         </div>
                                     )}
 
@@ -184,21 +300,30 @@ export default function ProfilDesaPage() {
                                         <div className="flex flex-col gap-4">
                                             <div className="flex justify-between items-center">
                                                 <h3 className="text-lg font-semibold text-gray-800">Struktur Organisasi</h3>
-                                                <button className="bg-[#129990]/20 text-[#129990] hover:bg-[#129990] hover:text-white px-4 py-2 rounded-md transition font-medium">
+                                                <button
+                                                    onClick={() => {
+                                                        setFormData({
+                                                            struktur_organisasi: profilData.struktur_organisasi || '',
+                                                            nama_organisasi: profilData.nama_organisasi || '',
+                                                            periode_struktur: profilData.periode_struktur || '',
+                                                        })
+                                                        setEditStrukturModalOpen(true)
+                                                    }}
+                                                    className="bg-[#129990]/20 text-[#129990] hover:bg-[#129990] hover:text-white px-4 py-2 rounded-md transition font-medium">
                                                     Edit Data
                                                 </button>
                                             </div>
 
-                                            <div className="flex flex-col md:flex-row gap-6 items-start">
-                                                <div className="w-full md:w-2/3">
+                                            <div className="flex flex-col md:flex-row md:items-center gap-4">
+                                                <div className="w-full md:w-1/3">
                                                     <button
-                                                        onClick={() => document.getElementById('modal-struktur').showModal()}
+                                                        onClick={() => setShowStruktur(true)}
                                                         className="cursor-pointer border rounded-md overflow-hidden shadow hover:shadow-lg transition"
                                                     >
                                                         <img
-                                                            src={profilData.struktur_organisasi || '/img/struktur-organisasi.jpg'}
+                                                            src={`${profilData.struktur_organisasi || '/img/struktur-organisasi.jpg'}?t=${new Date().getTime()}`}
                                                             alt="Struktur Organisasi"
-                                                            className="w-full object-cover"
+                                                            className="w-full h-auto object-contain"
                                                         />
                                                     </button>
                                                 </div>
@@ -214,27 +339,37 @@ export default function ProfilDesaPage() {
                                                 </div>
                                             </div>
 
-                                            {/* Modal Gambar Besar */}
-                                            <dialog id="modal-struktur" className="modal">
-                                                <form method="dialog" className="modal-box max-w-4xl bg-white">
-                                                    <img
-                                                        src={profilData.struktur_organisasi || '/img/struktur-organisasi.jpg'}
-                                                        alt="Struktur Organisasi"
-                                                        className="w-full h-auto object-contain rounded-md"
-                                                    />
-                                                    <div className="text-right mt-4">
-                                                        <button className="px-4 py-2 bg-[#129990] text-white rounded-md hover:bg-[#107c77] transition">
-                                                            Tutup
-                                                        </button>
-                                                    </div>
-                                                </form>
-                                                <div className="modal-backdrop">
-                                                    <form method="dialog">
-                                                        <button>Close</button>
-                                                    </form>
+                                            {/* Overlay Struktur Organisasi */}
+                                            {showStruktur && (
+                                                <div className="fixed inset-0 bg-gradient-to-b from-black/50 to-black/50 z-50 flex items-center justify-center p-6 overflow-auto">
+                                                    <button
+                                                        className="absolute top-6 right-6 text-white text-5xl font-bold leading-none focus:outline-none"
+                                                        onClick={() => setShowStruktur(false)}
+                                                        aria-label="Tutup gambar"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setShowStruktur(true)}
+                                                        className="cursor-pointer border rounded-md overflow-hidden shadow hover:shadow-lg transition"
+                                                    >
+                                                        <img
+                                                            src={profilData.struktur_organisasi || '/img/struktur-organisasi.jpg'}
+                                                            alt="Struktur Organisasi"
+                                                            className="w-full h-auto object-contain"
+                                                        />
+                                                    </button>
                                                 </div>
-                                            </dialog>
+                                            )}
+                                            <EditStrukturModal
+                                                isOpen={editStrukturModalOpen}
+                                                onClose={() => setEditStrukturModalOpen(false)}
+                                                formData={formData}
+                                                setFormData={setFormData}
+                                                onSubmit={handleSubmit}
+                                            />
                                         </div>
+
                                     )}
                                 </>
                             )}

@@ -1,6 +1,8 @@
 'use client'
+
 import { useEffect, useState } from 'react'
 import EditBansosModal from './BansosModal'
+import { Loader2 } from 'lucide-react'
 
 export default function KomponenBansos() {
     const [dataBansos, setDataBansos] = useState({
@@ -9,7 +11,7 @@ export default function KomponenBansos() {
         bpnt: 0,
         blt: 0,
     })
-
+    const [loading, setLoading] = useState(true)
     const [modalOpen, setModalOpen] = useState(false)
 
     useEffect(() => {
@@ -20,12 +22,13 @@ export default function KomponenBansos() {
                 setDataBansos(data)
             } catch (err) {
                 console.error('Gagal fetch data bansos:', err)
+            } finally {
+                setLoading(false)
             }
         }
         fetchData()
     }, [])
 
-    // Warna sesuai contoh sebelumnya
     const bantuanList = [
         { nama: 'BPJS PBI', jumlah: dataBansos.bpjs_pbi, warna: 'text-blue-600 border-blue-400' },
         { nama: 'PKH', jumlah: dataBansos.pkh, warna: 'text-green-600 border-green-400' },
@@ -46,18 +49,26 @@ export default function KomponenBansos() {
                 </button>
             </div>
 
-            {/* Card Bantuan Sosial */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                {bantuanList.map((item) => (
-                    <div
-                        key={item.nama}
-                        className={`rounded-xl p-4 shadow-sm border-l-4 bg-white border ${item.warna}`}
-                    >
-                        <p className="text-sm text-gray-500">{item.nama}</p>
-                        <h4 className="text-2xl font-bold">{item.jumlah.toLocaleString()} penerima</h4>
-                    </div>
-                ))}
-            </div>
+            {/* Loading Spinner */}
+            {loading ? (
+                <div className="flex flex-col items-center justify-center h-[200px] gap-2 text-gray-500">
+                    <Loader2 className="animate-spin w-8 h-8" />
+                    <p className="text-sm font-medium">Memuat Data...</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    {bantuanList.map((item) => (
+                        <div
+                            key={item.nama}
+                            className={`rounded-xl p-4 shadow-sm border-l-4 bg-white border ${item.warna}`}
+                        >
+                            <p className="text-sm text-gray-500">{item.nama}</p>
+                            <h4 className="text-2xl font-bold">{item.jumlah.toLocaleString()} penerima</h4>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             <EditBansosModal
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}

@@ -20,10 +20,9 @@ export default function Sidebar() {
         try {
             await fetch('/api/logout', {
                 method: 'POST',
-                cache: 'no-store', // pastikan tidak cached
+                cache: 'no-store',
             })
 
-            // Pakai reload untuk memastikan middleware tidak baca cookie lama
             window.location.href = '/'
         } catch (err) {
             console.error('Gagal logout:', err)
@@ -41,7 +40,7 @@ export default function Sidebar() {
     ]
 
     return (
-        <div className="w-64 h-screen bg-white shadow-md flex flex-col justify-between">
+        <div className="w-64 h-screen fixed top-0 left-0 bg-white shadow-md flex flex-col justify-between z-50">
             {/* Bagian atas berwarna */}
             <div className="bg-[#129990] text-white px-4 py-4">
                 <div className="flex items-center gap-3">
@@ -57,15 +56,15 @@ export default function Sidebar() {
             <hr className="border-gray-300" />
 
             {/* Navigasi */}
-            <div className="flex-1 px-4 py-4">
+            <div className="flex-1 px-4 py-4 overflow-y-auto">
                 <nav className="flex flex-col gap-2">
                     {navItems.map((item) => (
                         <button
                             key={item.path}
                             onClick={() => router.push(item.path)}
                             className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition cursor-pointer ${pathname === item.path
-                                ? 'bg-[#129990] text-white'
-                                : 'text-gray-700 hover:bg-gray-100'
+                                    ? 'bg-[#129990] text-white'
+                                    : 'text-gray-700 hover:bg-gray-100'
                                 }`}
                         >
                             {item.icon}
@@ -75,7 +74,7 @@ export default function Sidebar() {
                 </nav>
             </div>
 
-            {/* Logout di bagian bawah */}
+            {/* Logout */}
             <div className="px-4 pb-4">
                 <button
                     onClick={handleLogout}

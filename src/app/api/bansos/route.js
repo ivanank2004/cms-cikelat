@@ -17,3 +17,18 @@ export async function GET() {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
+
+export async function PUT(request) {
+  try {
+    const { bpjs_pbi, pkh, bpnt, blt } = await request.json()
+    await pool.query(
+      `UPDATE bansos SET bpjs_pbi = $1, pkh = $2, bpnt = $3, blt = $4 WHERE id = (SELECT id FROM bansos ORDER BY id DESC LIMIT 1)`,
+      [bpjs_pbi, pkh, bpnt, blt]
+    )
+
+    return NextResponse.json({ message: 'Bansos updated successfully' })
+  } catch (error) {
+    console.error('Error updating bansos:', error)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+  }
+}
