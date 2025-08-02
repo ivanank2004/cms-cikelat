@@ -3,10 +3,9 @@
 import Sidebar from '@/components/Sidebar'
 import DashboardHeader from '@/components/Header'
 import { useEffect, useState } from 'react'
-import StatistikLanjutan from '@/components/StatistikLanjutan'
-import KomponenAPBDesa from '@/components/APBDesa'
-import KomponenBansos from '@/components/Bansos'
-import EditStatistikModal from '@/components/StatistikModal'
+import StatistikLanjutan from '@/component/StatistikLanjutan'
+import KomponenAPBDesa from '@/component/APBDesa'
+import KomponenBansos from '@/component/Bansos'
 
 export default function InfografisPage() {
     const [activeTab, setActiveTab] = useState('statistik')
@@ -14,35 +13,15 @@ export default function InfografisPage() {
         jumlah_penduduk: 0,
         jumlah_kk: 0,
         laki_laki: 0,
-        perempuan: 0,
-        kelompok_umur: [],
-        dusun: [],
-        pendidikan_terakhir: [],
-        pekerjaan: [],
-        status_perkawinan: [],
-        agama: [],
+        perempuan: 0
     })
 
-    const [editModalOpen, setEditModalOpen] = useState(false)
-    const [formData, setFormData] = useState(statistik)
-
-    // 1. Pindahkan ke luar useEffect
-    const fetchStatistik = async () => {
-        const res = await fetch('/api/statistik')
-        const data = await res.json()
-        setStatistik({
-            ...data.statistik,
-            kelompok_umur: data.kelompok_umur,
-            dusun: data.dusun,
-            pendidikan_terakhir: data.pendidikan_terakhir,
-            pekerjaan: data.pekerjaan,
-            status_perkawinan: data.status_perkawinan,
-            agama: data.agama,
-        })
-    }
-
-    // 2. Panggil saat component pertama kali mount
     useEffect(() => {
+        const fetchStatistik = async () => {
+            const res = await fetch('/api/statistik')
+            const data = await res.json()
+            setStatistik(data.statistik)
+        }
         fetchStatistik()
     }, [])
 
@@ -84,13 +63,7 @@ export default function InfografisPage() {
                                     {/* Header Section */}
                                     <div className="flex justify-between items-center">
                                         <h3 className="text-lg font-semibold text-gray-800">Statistik Penduduk</h3>
-                                        <button
-                                            className="bg-[#129990]/20 text-[#129990] hover:bg-[#129990] hover:text-white px-4 py-2 rounded-md transition font-medium"
-                                            onClick={() => {
-                                                setFormData(statistik)
-                                                setEditModalOpen(true)
-                                            }}
-                                        >
+                                        <button className="bg-[#129990]/20 text-[#129990] hover:bg-[#129990] hover:text-white px-4 py-2 rounded-md transition font-medium">
                                             Edit Data
                                         </button>
                                     </div>
@@ -121,36 +94,7 @@ export default function InfografisPage() {
                                             <h4 className="text-2xl font-bold text-pink-600">{statistik.perempuan}</h4>
                                         </div>
                                     </div>
-                                    <StatistikLanjutan data={statistik} />
-                                    <EditStatistikModal
-                                        isOpen={editModalOpen}
-                                        onClose={() => setEditModalOpen(false)}
-                                        formData={formData}
-                                        setFormData={setFormData}
-                                        onSubmit={async () => {
-                                            await fetch('/api/statistik', {
-                                                method: 'PUT',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({
-                                                    statistik: {
-                                                        jumlah_penduduk: formData.jumlah_penduduk,
-                                                        jumlah_kk: formData.jumlah_kk,
-                                                        laki_laki: formData.laki_laki,
-                                                        perempuan: formData.perempuan,
-                                                    },
-                                                    kelompok_umur: formData.kelompok_umur,
-                                                    dusun: formData.dusun,
-                                                    pendidikan_terakhir: formData.pendidikan_terakhir,
-                                                    pekerjaan: formData.pekerjaan,
-                                                    status_perkawinan: formData.status_perkawinan,
-                                                    agama: formData.agama,
-                                                }),
-                                            })
-
-                                            await fetchStatistik()
-                                            setEditModalOpen(false)
-                                        }}
-                                    />
+                                    <StatistikLanjutan />
                                 </div>
                             )}
                             {activeTab === 'apbdesa' && (<KomponenAPBDesa />)}

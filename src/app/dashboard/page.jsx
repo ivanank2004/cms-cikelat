@@ -3,8 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Newspaper, Megaphone, ShoppingBag, Users } from 'lucide-react'
-import DashboardHeader from '@/components/Header'
-import Sidebar from '@/components/Sidebar'
 
 
 export default function DashboardPage() {
@@ -92,9 +90,8 @@ export default function DashboardPage() {
 
     return (
         <div className="flex min-h-screen bg-gray-100">
-            <Sidebar />
+
             <main className="flex-1">
-                <DashboardHeader title="Profil Desa" />
 
                 {/* KPI Cards */}
                 <section className="p-6">
