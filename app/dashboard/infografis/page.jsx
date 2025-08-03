@@ -1,17 +1,19 @@
-'use client'
+"use client";
 
-import Sidebar from '@/components/Sidebar'
-import DashboardHeader from '@/components/Header'
-import { useEffect, useState } from 'react'
-import StatistikLanjutan from '@/components/StatistikLanjutan'
-import KomponenAPBDesa from '@/components/APBDesa'
-import KomponenBansos from '@/components/Bansos'
-import EditStatistikModal from '@/components/StatistikModal'
-import { Loader2 } from 'lucide-react'
+import Sidebar from "@/components/Sidebar";
+import DashboardHeader from "@/components/Header";
+import { useEffect, useState } from "react";
+import StatistikLanjutan from "@/components/StatistikLanjutan";
+import KomponenAPBDesa from "@/components/APBDesa";
+import KomponenBansos from "@/components/Bansos";
+import EditStatistikModal from "@/components/StatistikModal";
+import { Loader2 } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 export default function InfografisPage() {
-    const [activeTab, setActiveTab] = useState('statistik')
-    const [isLoading, setIsLoading] = useState(true)
+    const [activeTab, setActiveTab] = useState("statistik");
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [statistik, setStatistik] = useState({
         jumlah_penduduk: 0,
         jumlah_kk: 0,
@@ -23,16 +25,16 @@ export default function InfografisPage() {
         pekerjaan: [],
         status_perkawinan: [],
         agama: [],
-    })
+    });
 
-    const [editModalOpen, setEditModalOpen] = useState(false)
-    const [formData, setFormData] = useState(statistik)
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [formData, setFormData] = useState(statistik);
 
     const fetchStatistik = async () => {
         try {
-            setIsLoading(true)
-            const res = await fetch('/api/statistik')
-            const data = await res.json()
+            setIsLoading(true);
+            const res = await fetch("/api/statistik");
+            const data = await res.json();
             setStatistik({
                 ...data.statistik,
                 kelompok_umur: data.kelompok_umur,
@@ -41,23 +43,23 @@ export default function InfografisPage() {
                 pekerjaan: data.pekerjaan,
                 status_perkawinan: data.status_perkawinan,
                 agama: data.agama,
-            })
+            });
         } catch (error) {
-            console.error('Gagal mengambil data statistik:', error)
+            console.error("Gagal mengambil data statistik:", error);
         } finally {
-            setIsLoading(false)
+            setIsLoading(false);
         }
-    }
+    };
 
     useEffect(() => {
-        fetchStatistik()
-    }, [])
+        fetchStatistik();
+    }, []);
 
     const tabs = [
-        { key: 'statistik', label: 'Statistik Penduduk' },
-        { key: 'apbdesa', label: 'APB Desa' },
-        { key: 'bansos', label: 'Bantuan Sosial' },
-    ]
+        { key: "statistik", label: "Statistik Penduduk" },
+        { key: "apbdesa", label: "APB Desa" },
+        { key: "bansos", label: "Bantuan Sosial" },
+    ];
 
     return (
         <div className="flex min-h-screen bg-gray-100 ml-64">
@@ -74,10 +76,11 @@ export default function InfografisPage() {
                                 <button
                                     key={tab.key}
                                     onClick={() => setActiveTab(tab.key)}
-                                    className={`px-4 py-3 text-sm font-medium transition ${activeTab === tab.key
-                                            ? 'border-b-2 border-[#129990] text-[#129990]'
-                                            : 'text-gray-600 hover:text-[#129990]'
-                                        }`}
+                                    className={`px-4 py-3 text-sm font-medium transition ${
+                                        activeTab === tab.key
+                                            ? "border-b-2 border-[#129990] text-[#129990]"
+                                            : "text-gray-600 hover:text-[#129990]"
+                                    }`}
                                 >
                                     {tab.label}
                                 </button>
@@ -89,20 +92,24 @@ export default function InfografisPage() {
                             {isLoading ? (
                                 <div className="flex flex-col items-center justify-center h-[200px] gap-2 text-gray-500">
                                     <Loader2 className="animate-spin w-8 h-8" />
-                                    <p className="text-sm font-medium">Memuat Data...</p>
+                                    <p className="text-sm font-medium">
+                                        Memuat Data...
+                                    </p>
                                 </div>
                             ) : (
                                 <>
-                                    {activeTab === 'statistik' && (
+                                    {activeTab === "statistik" && (
                                         <div className="flex flex-col gap-4">
                                             {/* Header Section */}
                                             <div className="flex justify-between items-center">
-                                                <h3 className="text-lg font-semibold text-gray-800">Statistik Penduduk</h3>
+                                                <h3 className="text-lg font-semibold text-gray-800">
+                                                    Statistik Penduduk
+                                                </h3>
                                                 <button
                                                     className="bg-[#129990]/20 text-[#129990] hover:bg-[#129990] hover:text-white px-4 py-2 rounded-md transition font-medium"
                                                     onClick={() => {
-                                                        setFormData(statistik)
-                                                        setEditModalOpen(true)
+                                                        setFormData(statistik);
+                                                        setEditModalOpen(true);
                                                     }}
                                                 >
                                                     Edit Data
@@ -112,69 +119,126 @@ export default function InfografisPage() {
                                             {/* Card Statistik */}
                                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                                 <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-green-500">
-                                                    <p className="text-sm text-gray-500">Jumlah Penduduk</p>
+                                                    <p className="text-sm text-gray-500">
+                                                        Jumlah Penduduk
+                                                    </p>
                                                     <h4 className="text-2xl font-bold text-green-600">
-                                                        {statistik.jumlah_penduduk}
+                                                        {
+                                                            statistik.jumlah_penduduk
+                                                        }
                                                     </h4>
                                                 </div>
 
                                                 <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-amber-500">
-                                                    <p className="text-sm text-gray-500">Jumlah Kepala Keluarga</p>
+                                                    <p className="text-sm text-gray-500">
+                                                        Jumlah Kepala Keluarga
+                                                    </p>
                                                     <h4 className="text-2xl font-bold text-amber-600">
                                                         {statistik.jumlah_kk}
                                                     </h4>
                                                 </div>
 
                                                 <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-blue-500">
-                                                    <p className="text-sm text-gray-500">Jumlah Laki-laki</p>
+                                                    <p className="text-sm text-gray-500">
+                                                        Jumlah Laki-laki
+                                                    </p>
                                                     <h4 className="text-2xl font-bold text-blue-600">
                                                         {statistik.laki_laki}
                                                     </h4>
                                                 </div>
 
                                                 <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-pink-500">
-                                                    <p className="text-sm text-gray-500">Jumlah Perempuan</p>
+                                                    <p className="text-sm text-gray-500">
+                                                        Jumlah Perempuan
+                                                    </p>
                                                     <h4 className="text-2xl font-bold text-pink-600">
                                                         {statistik.perempuan}
                                                     </h4>
                                                 </div>
                                             </div>
 
-                                            <StatistikLanjutan data={statistik} />
+                                            <StatistikLanjutan
+                                                data={statistik}
+                                            />
 
                                             <EditStatistikModal
                                                 isOpen={editModalOpen}
-                                                onClose={() => setEditModalOpen(false)}
+                                                onClose={() =>
+                                                    setEditModalOpen(false)
+                                                }
                                                 formData={formData}
                                                 setFormData={setFormData}
+                                                isSubmitting={isSubmitting}
                                                 onSubmit={async () => {
-                                                    await fetch('/api/statistik', {
-                                                        method: 'PUT',
-                                                        headers: { 'Content-Type': 'application/json' },
-                                                        body: JSON.stringify({
-                                                            statistik: {
-                                                                jumlah_penduduk: formData.jumlah_penduduk,
-                                                                jumlah_kk: formData.jumlah_kk,
-                                                                laki_laki: formData.laki_laki,
-                                                                perempuan: formData.perempuan,
-                                                            },
-                                                            kelompok_umur: formData.kelompok_umur,
-                                                            dusun: formData.dusun,
-                                                            pendidikan_terakhir: formData.pendidikan_terakhir,
-                                                            pekerjaan: formData.pekerjaan,
-                                                            status_perkawinan: formData.status_perkawinan,
-                                                            agama: formData.agama,
-                                                        }),
-                                                    })
-
-                                                    await fetchStatistik()
-                                                    setEditModalOpen(false)
+                                                    setIsSubmitting(true);
+                                                    const toastId =
+                                                        toast.loading(
+                                                            "Menyimpan data statistik..."
+                                                        );
+                                                    try {
+                                                        await fetch(
+                                                            "/api/statistik",
+                                                            {
+                                                                method: "PUT",
+                                                                headers: {
+                                                                    "Content-Type":
+                                                                        "application/json",
+                                                                },
+                                                                body: JSON.stringify(
+                                                                    {
+                                                                        statistik:
+                                                                            {
+                                                                                jumlah_penduduk:
+                                                                                    formData.jumlah_penduduk,
+                                                                                jumlah_kk:
+                                                                                    formData.jumlah_kk,
+                                                                                laki_laki:
+                                                                                    formData.laki_laki,
+                                                                                perempuan:
+                                                                                    formData.perempuan,
+                                                                            },
+                                                                        kelompok_umur:
+                                                                            formData.kelompok_umur,
+                                                                        dusun: formData.dusun,
+                                                                        pendidikan_terakhir:
+                                                                            formData.pendidikan_terakhir,
+                                                                        pekerjaan:
+                                                                            formData.pekerjaan,
+                                                                        status_perkawinan:
+                                                                            formData.status_perkawinan,
+                                                                        agama: formData.agama,
+                                                                    }
+                                                                ),
+                                                            }
+                                                        );
+                                                        toast.success(
+                                                            "Data statistik berhasil diperbarui",
+                                                            { id: toastId }
+                                                        );
+                                                        await fetchStatistik();
+                                                        setEditModalOpen(false);
+                                                    } catch (error) {
+                                                        console.error(
+                                                            "Gagal menyimpan data statistik:",
+                                                            error
+                                                        );
+                                                        toast.error(
+                                                            "Gagal menyimpan perubahan",
+                                                            { id: toastId }
+                                                        );
+                                                    } finally {
+                                                        setIsSubmitting(false);
+                                                    }
                                                 }}
                                             />
                                         </div>
                                     )}
-                                    {activeTab === 'apbdesa' && <KomponenAPBDesa />}
-                                    {activeTab === 'bansos' && <KomponenBansos />}
+                                    {activeTab === "apbdesa" && (
+                                        <KomponenAPBDesa />
+                                    )}
+                                    {activeTab === "bansos" && (
+                                        <KomponenBansos />
+                                    )}
                                 </>
                             )}
                         </div>
@@ -182,5 +246,5 @@ export default function InfografisPage() {
                 </div>
             </main>
         </div>
-    )
+    );
 }

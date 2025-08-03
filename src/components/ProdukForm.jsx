@@ -3,10 +3,15 @@
 import { useEffect, useState } from "react";
 import { uploadImage } from "@/lib/uploadImageToSupabase"; // Pastikan path sesuai
 import { getImageUrl } from "@/lib/getImageURL";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash } from "lucide-react";
 import toast from "react-hot-toast";
 
-export default function ProdukForm({ initialData, onSubmit, onCancel }) {
+export default function ProdukForm({
+    initialData,
+    onSubmit,
+    onCancel,
+    isSubmitting = false,
+}) {
     const [form, setForm] = useState({
         nama: "",
         harga: "",
@@ -17,7 +22,6 @@ export default function ProdukForm({ initialData, onSubmit, onCancel }) {
 
     const [preview, setPreview] = useState(null);
     const [uploading, setUploading] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (initialData) {
@@ -52,127 +56,152 @@ export default function ProdukForm({ initialData, onSubmit, onCancel }) {
         }
     };
 
+    const handleRemoveImage = () => {
+        setForm((prev) => ({ ...prev, gambar: "" }));
+        setPreview(null);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsSubmitting(true);
-        const toastId = toast.loading("Menyimpan produk...");
-        try {
-            await onSubmit(form);
-            toast.success("Produk berhasil disimpan", { id: toastId });
-        } catch (error) {
-            toast.error("Gagal menyimpan produk", { id: toastId });
-            console.error(error);
-        } finally {
-            setIsSubmitting(false);
-        }
+        await onSubmit(form);
     };
 
     return (
-        <form
-            onSubmit={handleSubmit}
-            className="bg-white p-6 rounded-xl shadow-md space-y-4"
-        >
-            <div>
-                <label className="block font-medium mb-1 text-gray-800">
-                    Nama Produk
-                </label>
-                <input
-                    type="text"
-                    name="nama"
-                    value={form.nama}
-                    onChange={handleChange}
-                    className="w-full border rounded px-3 py-2 text-gray-800"
-                    required
-                    disabled={isSubmitting}
-                />
+        <div className="bg-white rounded-xl shadow-md flex flex-col h-[calc(100vh-12rem)]">
+            {/* Header Fixed */}
+            <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white rounded-t-xl z-10">
+                <h3 className="text-xl font-bold text-gray-800">
+                    {initialData ? "Edit Produk" : "Tambah Produk"}
+                </h3>
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        disabled={isSubmitting || uploading}
+                        className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 transition text-sm font-medium disabled:opacity-50"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={isSubmitting || uploading}
+                        className="px-4 py-2 rounded-md bg-[#129990] text-white hover:bg-[#107c77] transition text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+                    >
+                        {isSubmitting && (
+                            <Loader2 size={16} className="animate-spin" />
+                        )}
+                        {isSubmitting ? "Menyimpan..." : "Simpan"}
+                    </button>
+                </div>
             </div>
 
-            <div>
-                <label className="block font-medium mb-1 text-gray-800">
-                    Harga
-                </label>
-                <input
-                    type="number"
-                    name="harga"
-                    value={form.harga}
-                    onChange={handleChange}
-                    className="w-full border rounded px-3 py-2 text-gray-800"
-                    required
-                    disabled={isSubmitting}
-                />
-            </div>
-
-            <div>
-                <label className="block font-medium mb-1 text-gray-800">
-                    Kontak
-                </label>
-                <input
-                    type="text"
-                    name="kontak"
-                    value={form.kontak}
-                    onChange={handleChange}
-                    className="w-full border rounded px-3 py-2 text-gray-800"
-                    disabled={isSubmitting}
-                />
-            </div>
-
-            <div>
-                <label className="block font-medium mb-1 text-gray-800">
-                    Deskripsi
-                </label>
-                <textarea
-                    name="deskripsi"
-                    value={form.deskripsi}
-                    onChange={handleChange}
-                    className="w-full border rounded px-3 py-2 text-gray-800"
-                    rows="4"
-                    disabled={isSubmitting}
-                />
-            </div>
-
-            <div>
-                <label className="block font-medium mb-1 text-gray-800">
-                    Gambar
-                </label>
-                <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="block text-gray-800"
-                    disabled={uploading || isSubmitting}
-                />
-                {uploading && (
-                    <p className="text-sm text-gray-500">Mengupload...</p>
-                )}
-                {preview && (
-                    <img
-                        src={preview}
-                        alt="Preview"
-                        className="mt-2 w-32 h-32 object-cover rounded text-gray-800"
-                    />
-                )}
-            </div>
-
-            <div className="flex justify-end gap-3">
-                <button
-                    type="button"
-                    onClick={onCancel}
-                    className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-gray-800"
-                    disabled={isSubmitting}
-                >
-                    Batal
-                </button>
-                <button
-                    type="submit"
-                    className="px-4 py-2 bg-[#129990] text-white rounded hover:bg-[#0f7f76] flex items-center gap-2"
-                    disabled={uploading || isSubmitting}
-                >
-                    {isSubmitting && (
-                        <Loader2 size={18} className="animate-spin" />
+            {/* Content Scrollable */}
+            <div className="flex-grow overflow-y-auto p-6">
+                <form className="space-y-6">
+                    {/* Preview Gambar */}
+                    {preview && (
+                        <div className="flex justify-center">
+                            <div className="relative inline-block">
+                                <img
+                                    src={preview}
+                                    alt="Preview"
+                                    className="max-h-48 rounded-lg border border-gray-300 object-cover"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleRemoveImage}
+                                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
+                                    disabled={isSubmitting}
+                                >
+                                    <Trash size={14} />
+                                </button>
+                            </div>
+                        </div>
                     )}
-                    {isSubmitting ? "Menyimpan..." : "Simpan"}
-                </button>
+
+                    {/* Upload Gambar */}
+                    <div>
+                        <label className="block text-sm font-medium mb-1 text-gray-700">
+                            Upload Gambar
+                        </label>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="w-full border rounded px-3 py-2 text-gray-800 border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#129990] file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-[#129990]/20 file:text-[#129990] file:cursor-pointer"
+                            disabled={uploading || isSubmitting}
+                        />
+                        {uploading && (
+                            <p className="text-sm text-gray-500 flex items-center mt-1">
+                                <Loader2
+                                    size={16}
+                                    className="animate-spin mr-2"
+                                />{" "}
+                                Mengupload...
+                            </p>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-1 text-gray-700">
+                            Nama Produk
+                        </label>
+                        <input
+                            type="text"
+                            name="nama"
+                            value={form.nama}
+                            onChange={handleChange}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#129990] text-gray-800"
+                            required
+                            disabled={isSubmitting}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-1 text-gray-700">
+                            Harga
+                        </label>
+                        <input
+                            type="number"
+                            name="harga"
+                            value={form.harga}
+                            onChange={handleChange}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#129990] text-gray-800"
+                            required
+                            disabled={isSubmitting}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-1 text-gray-700">
+                            Kontak
+                        </label>
+                        <input
+                            type="text"
+                            name="kontak"
+                            value={form.kontak}
+                            onChange={handleChange}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#129990] text-gray-800"
+                            disabled={isSubmitting}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-1 text-gray-700">
+                            Deskripsi
+                        </label>
+                        <textarea
+                            name="deskripsi"
+                            value={form.deskripsi}
+                            onChange={handleChange}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#129990] text-gray-800"
+                            rows="4"
+                            disabled={isSubmitting}
+                        />
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
     );
 }

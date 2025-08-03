@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function EditStrukturModal({
     isOpen,
@@ -35,6 +36,21 @@ export default function EditStrukturModal({
         }
     }
 
+    async function handleSubmit() {
+        const toastId = toast.loading(
+            "Menyimpan perubahan struktur organisasi..."
+        );
+        try {
+            await onSubmit();
+            toast.success("Struktur organisasi berhasil diperbarui", {
+                id: toastId,
+            });
+        } catch (error) {
+            console.error("Error submitting form:", error);
+            toast.error("Gagal menyimpan perubahan", { id: toastId });
+        }
+    }
+
     if (!isOpen) return null;
 
     return (
@@ -46,7 +62,7 @@ export default function EditStrukturModal({
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
-                        onSubmit();
+                        handleSubmit();
                     }}
                     className="grid grid-cols-1 md:grid-cols-2 gap-6"
                 >

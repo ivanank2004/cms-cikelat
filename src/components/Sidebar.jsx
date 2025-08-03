@@ -12,22 +12,25 @@ import {
     LogOut,
     Settings, // Tambahkan icon Settings
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function Sidebar() {
     const router = useRouter();
     const pathname = usePathname();
 
     const handleLogout = async () => {
+        const toastId = toast.loading("Logging out...");
         try {
             await fetch("/api/logout", {
                 method: "POST",
                 cache: "no-store",
             });
 
+            toast.success("Berhasil logout", { id: toastId });
             window.location.href = "/";
         } catch (err) {
             console.error("Gagal logout:", err);
-            alert("Terjadi kesalahan saat logout.");
+            toast.error("Terjadi kesalahan saat logout", { id: toastId });
         }
     };
 

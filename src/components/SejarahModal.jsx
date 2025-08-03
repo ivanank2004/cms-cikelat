@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function EditSejarahModal({
     isOpen,
@@ -18,6 +19,17 @@ export default function EditSejarahModal({
         setFormData((prev) => ({ ...prev, [name]: value }));
     }
 
+    async function handleSubmit() {
+        const toastId = toast.loading("Menyimpan sejarah desa...");
+        try {
+            await onSubmit();
+            toast.success("Sejarah desa berhasil diperbarui", { id: toastId });
+        } catch (error) {
+            console.error("Error submitting form:", error);
+            toast.error("Gagal menyimpan perubahan", { id: toastId });
+        }
+    }
+
     return (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
             <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-3xl mx-4">
@@ -27,7 +39,7 @@ export default function EditSejarahModal({
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
-                        onSubmit();
+                        handleSubmit();
                     }}
                     className="space-y-6"
                 >

@@ -14,6 +14,7 @@ export default function KomponenBansos() {
         blt: 0,
     });
     const [loading, setLoading] = useState(true);
+    const [isDataFetched, setIsDataFetched] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -28,26 +29,23 @@ export default function KomponenBansos() {
 
     useEffect(() => {
         async function fetchData() {
+            if (isDataFetched) return; // Prevent duplicate fetches
             setLoading(true);
-            const toastId = toast.loading("Memuat data bantuan sosial...");
             try {
                 const res = await fetch("/api/bansos");
                 if (!res.ok)
                     throw new Error("Gagal memuat data bantuan sosial");
                 const data = await res.json();
                 setDataBansos(data);
-                toast.success("Data berhasil dimuat", { id: toastId });
+                setIsDataFetched(true);
             } catch (err) {
                 console.error("Gagal fetch data bansos:", err);
-                toast.error("Gagal memuat data bantuan sosial", {
-                    id: toastId,
-                });
             } finally {
                 setLoading(false);
             }
         }
         fetchData();
-    }, []);
+    }, [isDataFetched]);
 
     const handleSubmitRequest = () => {
         setConfirmAction({

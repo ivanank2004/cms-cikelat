@@ -139,6 +139,7 @@ export default function BelanjaPage() {
                                 setActiveTab("list");
                                 setEditData(null);
                             }}
+                            isSubmitting={isSubmitting}
                         />
                     ) : (
                         <>

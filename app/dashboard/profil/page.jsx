@@ -11,6 +11,7 @@ import EditStrukturModal from "@/components/StrukturModal";
 import { supabase } from "@/lib/supabaseClient";
 import { getImageUrl } from "@/lib/getImageURL";
 import { Loader2 } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 export default function ProfilDesaPage() {
     const [activeTab, setActiveTab] = useState("kepala");
@@ -21,6 +22,7 @@ export default function ProfilDesaPage() {
     const [editStrukturModalOpen, setEditStrukturModalOpen] = useState(false);
     const [showStruktur, setShowStruktur] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         nama_kepala_desa: "",
         jabatan_kepala_desa: "",
@@ -38,11 +40,13 @@ export default function ProfilDesaPage() {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                setIsLoading(true);
                 const res = await fetch("/api/profil");
                 const data = await res.json();
                 setProfilData(data);
             } catch (err) {
                 console.error("Gagal mengambil data profil:", err);
+                toast.error("Gagal memuat data profil");
             } finally {
                 setIsLoading(false);
             }
@@ -52,6 +56,8 @@ export default function ProfilDesaPage() {
     }, []);
 
     async function handleSubmit() {
+        setIsSubmitting(true);
+        const toastId = toast.loading("Menyimpan perubahan...");
         try {
             let payload = {};
 
@@ -123,6 +129,7 @@ export default function ProfilDesaPage() {
 
             if (!res.ok) throw new Error("Gagal menyimpan data.");
 
+            toast.success("Data berhasil disimpan", { id: toastId });
             setEditModalOpen(false);
             setEditVisiModalOpen(false);
             setEditSejarahModalOpen(false);
@@ -130,7 +137,11 @@ export default function ProfilDesaPage() {
             window.location.reload();
         } catch (err) {
             console.error("Gagal menyimpan:", err);
-            alert("Terjadi kesalahan saat menyimpan data.");
+            toast.error("Terjadi kesalahan saat menyimpan data", {
+                id: toastId,
+            });
+        } finally {
+            setIsSubmitting(false);
         }
     }
 
@@ -161,8 +172,17 @@ export default function ProfilDesaPage() {
 
                         {/* Content */}
                         <div className="p-6 text-sm text-gray-700 min-h-[200px]">
-                            {!profilData ? (
-                                <p>Memuat data...</p>
+                            {isLoading ? (
+                                <div className="flex flex-col items-center justify-center h-[200px] gap-2 text-gray-500">
+                                    <Loader2 className="animate-spin w-8 h-8" />
+                                    <p className="text-sm font-medium">
+                                        Memuat Data...
+                                    </p>
+                                </div>
+                            ) : !profilData ? (
+                                <p className="text-center text-gray-500">
+                                    Data tidak tersedia
+                                </p>
                             ) : (
                                 <>
                                     {activeTab === "kepala" && (
