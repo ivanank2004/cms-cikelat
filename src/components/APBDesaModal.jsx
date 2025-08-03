@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react"; // Import Loader2
 
 export default function EditAPBDesaModal({
     isOpen,
@@ -10,6 +10,7 @@ export default function EditAPBDesaModal({
     onSubmit,
     onDelete,
     onDeleteAll,
+    isSubmitting, // Tambahkan prop isSubmitting
 }) {
     if (!isOpen) return null;
 
@@ -61,16 +62,21 @@ export default function EditAPBDesaModal({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 transition text-sm font-medium"
+                            disabled={isSubmitting} // Nonaktifkan saat submitting
+                            className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 transition text-sm font-medium disabled:opacity-50"
                         >
                             Batal
                         </button>
                         <button
                             type="button"
                             onClick={onSubmit}
-                            className="px-4 py-2 rounded-md bg-[#129990] text-white hover:bg-[#107c77] transition text-sm font-medium"
+                            disabled={isSubmitting} // Nonaktifkan saat submitting
+                            className="px-4 py-2 rounded-md bg-[#129990] text-white hover:bg-[#107c77] transition text-sm font-medium flex items-center gap-2 disabled:opacity-50"
                         >
-                            Simpan Perubahan
+                            {isSubmitting && (
+                                <Loader2 size={16} className="animate-spin" />
+                            )}
+                            {isSubmitting ? "Menyimpan..." : "Simpan Perubahan"}
                         </button>
                     </div>
                 </div>
@@ -84,7 +90,6 @@ export default function EditAPBDesaModal({
                         }}
                         className="space-y-6"
                     >
-                        {/* Tombol Aksi Tambah & Hapus Semua */}
                         <div className="flex justify-between items-center mb-4">
                             <button
                                 type="button"
@@ -102,14 +107,12 @@ export default function EditAPBDesaModal({
                             </button>
                         </div>
 
-                        {/* List Data APBD */}
                         {formData.length > 0 ? (
                             formData.map((item, index) => (
                                 <div
                                     key={index}
                                     className="p-4 border rounded-lg relative group"
                                 >
-                                    {/* Tombol Hapus per Item */}
                                     <button
                                         type="button"
                                         onClick={() => onDelete(item.tahun)}
