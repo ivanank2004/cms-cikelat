@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Pool } from "pg";
 import { supabase } from "@/lib/supabaseClient";
 import { getImageUrl } from "@/lib/getImageURL";
+import { extractPathFromUrl } from "@/lib/deleteFileFromSupabase";
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -35,23 +36,27 @@ export async function POST(req) {
         const tanggal = formData.get("tanggal");
         const sumber = formData.get("sumber");
         const isi = formData.get("isi");
-        const gambarFile = formData.get("gambar"); // bisa File atau null
+        const gambar = formData.get("gambar"); // bisa File, URL string, atau null
 
         let gambarUrl = null;
 
         // Upload gambar ke Supabase jika ada file
-        if (gambarFile && typeof gambarFile === "object") {
-            const fileExt = gambarFile.name.split(".").pop();
+        if (gambar && typeof gambar === "object") {
+            const fileExt = gambar.name.split(".").pop();
             const fileName = `${Date.now()}.${fileExt}`;
             const filePath = `berita/${fileName}`;
 
             const { error } = await supabase.storage
                 .from("cms-desa-cikelat")
-                .upload(filePath, gambarFile);
+                .upload(filePath, gambar);
 
             if (error) throw error;
 
             gambarUrl = getImageUrl(filePath);
+        }
+        // Jika gambar adalah string (URL), gunakan langsung
+        else if (gambar && typeof gambar === "string") {
+            gambarUrl = gambar;
         }
 
         const client = await pool.connect();
@@ -94,27 +99,42 @@ export async function POST(req) {
 }
 
 // DELETE
-export async function DELETE(req) {
+export async function DELETE(request) {
     try {
-        const body = await req.json();
-        const { id } = body;
+        const { id } = await request.json();
 
-        if (!id) {
-            return NextResponse.json(
-                { error: "ID tidak ditemukan" },
-                { status: 400 }
-            );
-        }
-
+        // Ambil data berita yang akan dihapus untuk menghapus gambar terkait
         const client = await pool.connect();
-        await client.query("DELETE FROM berita WHERE id = $1", [id]);
-        client.release();
+        try {
+            // Ambil informasi gambar terlebih dahulu
+            const result = await client.query(
+                "SELECT gambar FROM berita WHERE id = $1",
+                [id]
+            );
 
-        return NextResponse.json({ message: "Berita berhasil dihapus" });
+            if (result.rows.length > 0 && result.rows[0].gambar) {
+                // Hapus file gambar dari storage jika ada
+                const imageUrl = result.rows[0].gambar;
+                const pathInfo = extractPathFromUrl(imageUrl);
+
+                if (pathInfo) {
+                    await supabase.storage
+                        .from(pathInfo.bucket)
+                        .remove([pathInfo.path]);
+                }
+            }
+
+            // Hapus data dari database
+            await client.query("DELETE FROM berita WHERE id = $1", [id]);
+
+            return NextResponse.json({ message: "Berita berhasil dihapus" });
+        } finally {
+            client.release();
+        }
     } catch (error) {
-        console.error("DELETE error:", error);
+        console.error("Error deleting berita:", error);
         return NextResponse.json(
-            { error: "Gagal menghapus berita" },
+            { error: "Internal Server Error" },
             { status: 500 }
         );
     }

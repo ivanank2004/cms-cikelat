@@ -181,6 +181,9 @@ export default function BelanjaPage() {
                                                     Kontak
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-sm font-medium">
+                                                    Deskripsi
+                                                </th>
+                                                <th className="px-4 py-3 text-left text-sm font-medium">
                                                     Aksi
                                                 </th>
                                             </tr>
@@ -189,7 +192,7 @@ export default function BelanjaPage() {
                                             {produk.length === 0 ? (
                                                 <tr>
                                                     <td
-                                                        colSpan="5"
+                                                        colSpan="6"
                                                         className="px-4 py-4 text-center text-gray-500"
                                                     >
                                                         Tidak ada produk.
@@ -224,6 +227,19 @@ export default function BelanjaPage() {
                                                         </td>
                                                         <td className="px-4 py-3">
                                                             {item.kontak || "-"}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            {item.deskripsi ? (
+                                                                <div className="max-w-xs truncate">
+                                                                    {
+                                                                        item.deskripsi
+                                                                    }
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-gray-400 italic">
+                                                                    -
+                                                                </span>
+                                                            )}
                                                         </td>
                                                         <td className="px-4 py-3">
                                                             <div className="flex gap-2">

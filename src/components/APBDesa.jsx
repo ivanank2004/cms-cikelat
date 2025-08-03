@@ -2,46 +2,38 @@
 
 import { useEffect, useState } from "react";
 import EditAPBDesaModal from "./APBDesaModal";
-import ConfirmModal from "./ConfirmModal"; // Import ConfirmModal
+import ConfirmModal from "./ConfirmModal";
 import { Loader2 } from "lucide-react";
-import toast from "react-hot-toast";
+import useApi from "@/hooks/useApi";
 
 export default function KomponenAPBDesa() {
     const [apbdesData, setApbdesData] = useState([]);
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [formData, setFormData] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // State untuk modal konfirmasi
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState({
         title: "",
         message: "",
         onConfirm: () => {},
     });
-    const [isConfirmLoading, setIsConfirmLoading] = useState(false);
 
-    async function fetchData() {
-        // ... (kode fetchData tetap sama)
+    // Gunakan custom hook untuk API operations
+    const { isLoading, isSubmitting, fetchData, mutateData, deleteData } =
+        useApi();
+
+    async function loadData() {
         try {
-            setIsLoading(true);
-            const res = await fetch("/api/apbdes");
-            if (!res.ok) throw new Error("Gagal memuat data awal.");
-            const data = await res.json();
+            const data = await fetchData("/api/apbdes");
             const sortedData = data.sort((a, b) => b.tahun - a.tahun);
             setApbdesData(sortedData);
             setFormData(sortedData);
         } catch (err) {
             console.error("Gagal fetch data APBDes:", err);
-            toast.error(err.message || "Gagal memuat data APBD.");
-        } finally {
-            setIsLoading(false);
         }
     }
 
     useEffect(() => {
-        fetchData();
+        loadData();
     }, []);
 
     const handleOpenModal = () => {
@@ -54,24 +46,20 @@ export default function KomponenAPBDesa() {
     };
 
     const handleSubmit = async () => {
-        // ... (kode handleSubmit tetap sama)
-        setIsSubmitting(true);
-        const toastId = toast.loading("Menyimpan perubahan...");
         try {
-            const res = await fetch("/api/apbdes", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
-            });
-            if (!res.ok) throw new Error("Gagal menyimpan data");
-            await fetchData();
-            toast.success("Data berhasil diperbarui!", { id: toastId });
+            await mutateData(
+                "/api/apbdes",
+                formData,
+                "PUT",
+                "Menyimpan perubahan...",
+                "Data berhasil diperbarui!",
+                "Gagal menyimpan perubahan."
+            );
+
+            await loadData();
             setEditModalOpen(false);
         } catch (error) {
             console.error(error);
-            toast.error("Gagal menyimpan perubahan.", { id: toastId });
-        } finally {
-            setIsSubmitting(false);
         }
     };
 
@@ -98,49 +86,39 @@ export default function KomponenAPBDesa() {
 
     // Logika untuk menghapus satu data
     const handleDelete = async (tahun) => {
-        setIsConfirmLoading(true);
-        const toastId = toast.loading(`Menghapus data tahun ${tahun}...`);
         try {
-            const res = await fetch("/api/apbdes", {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ tahun }),
-            });
-            if (!res.ok) throw new Error("Gagal menghapus data");
+            await deleteData(
+                "/api/apbdes",
+                { tahun },
+                `Menghapus data tahun ${tahun}...`,
+                `Data tahun ${tahun} berhasil dihapus.`,
+                "Gagal menghapus data."
+            );
+
             setFormData(formData.filter((item) => item.tahun !== tahun));
-            toast.success(`Data tahun ${tahun} berhasil dihapus.`, {
-                id: toastId,
-            });
-            await fetchData(); // Sinkronisasi ulang
-            setConfirmModalOpen(false); // Tutup modal konfirmasi
+            await loadData();
+            setConfirmModalOpen(false);
         } catch (error) {
             console.error(error);
-            toast.error("Gagal menghapus data.", { id: toastId });
-        } finally {
-            setIsConfirmLoading(false);
         }
     };
 
     // Logika untuk menghapus semua data
     const handleDeleteAll = async () => {
-        setIsConfirmLoading(true);
-        const toastId = toast.loading("Menghapus semua data...");
         try {
-            const res = await fetch("/api/apbdes", {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ deleteAll: true }),
-            });
-            if (!res.ok) throw new Error("Gagal menghapus semua data");
+            await deleteData(
+                "/api/apbdes",
+                { deleteAll: true },
+                "Menghapus semua data...",
+                "Semua data berhasil dihapus.",
+                "Gagal menghapus semua data."
+            );
+
             setFormData([]);
-            toast.success("Semua data berhasil dihapus.", { id: toastId });
-            await fetchData(); // Sinkronisasi ulang
-            setConfirmModalOpen(false); // Tutup modal konfirmasi
+            await loadData();
+            setConfirmModalOpen(false);
         } catch (error) {
             console.error(error);
-            toast.error("Gagal menghapus semua data.", { id: toastId });
-        } finally {
-            setIsConfirmLoading(false);
         }
     };
 
@@ -159,7 +137,6 @@ export default function KomponenAPBDesa() {
 
     return (
         <div className="flex flex-col gap-6 min-h-[200px]">
-            {/* ... (kode tampilan utama tetap sama) ... */}
             {isLoading ? (
                 <div className="flex flex-col items-center justify-center h-[200px] gap-2 text-gray-500">
                     <Loader2 className="animate-spin w-8 h-8" />
@@ -261,8 +238,8 @@ export default function KomponenAPBDesa() {
                         formData={formData}
                         setFormData={setFormData}
                         onSubmit={handleSubmit}
-                        onDelete={handleDeleteRequest} // Ganti dengan fungsi request
-                        onDeleteAll={handleDeleteAllRequest} // Ganti dengan fungsi request
+                        onDelete={handleDeleteRequest}
+                        onDeleteAll={handleDeleteAllRequest}
                         isSubmitting={isSubmitting}
                     />
                 </>
@@ -275,7 +252,7 @@ export default function KomponenAPBDesa() {
                 onConfirm={confirmAction.onConfirm}
                 title={confirmAction.title}
                 message={confirmAction.message}
-                isLoading={isConfirmLoading}
+                isLoading={isSubmitting}
             />
         </div>
     );

@@ -8,12 +8,10 @@ import KomponenAPBDesa from "@/components/APBDesa";
 import KomponenBansos from "@/components/Bansos";
 import EditStatistikModal from "@/components/StatistikModal";
 import { Loader2 } from "lucide-react";
-import { toast } from "react-hot-toast";
+import useApi from "@/hooks/useApi";
 
 export default function InfografisPage() {
     const [activeTab, setActiveTab] = useState("statistik");
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [statistik, setStatistik] = useState({
         jumlah_penduduk: 0,
         jumlah_kk: 0,
@@ -30,11 +28,12 @@ export default function InfografisPage() {
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [formData, setFormData] = useState(statistik);
 
+    // Gunakan custom hook untuk API
+    const { isLoading, isSubmitting, fetchData, mutateData } = useApi();
+
     const fetchStatistik = async () => {
         try {
-            setIsLoading(true);
-            const res = await fetch("/api/statistik");
-            const data = await res.json();
+            const data = await fetchData("/api/statistik");
             setStatistik({
                 ...data.statistik,
                 kelompok_umur: data.kelompok_umur,
@@ -46,14 +45,43 @@ export default function InfografisPage() {
             });
         } catch (error) {
             console.error("Gagal mengambil data statistik:", error);
-        } finally {
-            setIsLoading(false);
         }
     };
 
     useEffect(() => {
         fetchStatistik();
     }, []);
+
+    const handleUpdateStatistik = async () => {
+        try {
+            await mutateData(
+                "/api/statistik",
+                {
+                    statistik: {
+                        jumlah_penduduk: formData.jumlah_penduduk,
+                        jumlah_kk: formData.jumlah_kk,
+                        laki_laki: formData.laki_laki,
+                        perempuan: formData.perempuan,
+                    },
+                    kelompok_umur: formData.kelompok_umur,
+                    dusun: formData.dusun,
+                    pendidikan_terakhir: formData.pendidikan_terakhir,
+                    pekerjaan: formData.pekerjaan,
+                    status_perkawinan: formData.status_perkawinan,
+                    agama: formData.agama,
+                },
+                "PUT",
+                "Menyimpan data statistik...",
+                "Data statistik berhasil diperbarui",
+                "Gagal menyimpan perubahan"
+            );
+
+            await fetchStatistik();
+            setEditModalOpen(false);
+        } catch (error) {
+            console.error("Gagal menyimpan data statistik:", error);
+        }
+    };
 
     const tabs = [
         { key: "statistik", label: "Statistik Penduduk" },
@@ -169,67 +197,7 @@ export default function InfografisPage() {
                                                 formData={formData}
                                                 setFormData={setFormData}
                                                 isSubmitting={isSubmitting}
-                                                onSubmit={async () => {
-                                                    setIsSubmitting(true);
-                                                    const toastId =
-                                                        toast.loading(
-                                                            "Menyimpan data statistik..."
-                                                        );
-                                                    try {
-                                                        await fetch(
-                                                            "/api/statistik",
-                                                            {
-                                                                method: "PUT",
-                                                                headers: {
-                                                                    "Content-Type":
-                                                                        "application/json",
-                                                                },
-                                                                body: JSON.stringify(
-                                                                    {
-                                                                        statistik:
-                                                                            {
-                                                                                jumlah_penduduk:
-                                                                                    formData.jumlah_penduduk,
-                                                                                jumlah_kk:
-                                                                                    formData.jumlah_kk,
-                                                                                laki_laki:
-                                                                                    formData.laki_laki,
-                                                                                perempuan:
-                                                                                    formData.perempuan,
-                                                                            },
-                                                                        kelompok_umur:
-                                                                            formData.kelompok_umur,
-                                                                        dusun: formData.dusun,
-                                                                        pendidikan_terakhir:
-                                                                            formData.pendidikan_terakhir,
-                                                                        pekerjaan:
-                                                                            formData.pekerjaan,
-                                                                        status_perkawinan:
-                                                                            formData.status_perkawinan,
-                                                                        agama: formData.agama,
-                                                                    }
-                                                                ),
-                                                            }
-                                                        );
-                                                        toast.success(
-                                                            "Data statistik berhasil diperbarui",
-                                                            { id: toastId }
-                                                        );
-                                                        await fetchStatistik();
-                                                        setEditModalOpen(false);
-                                                    } catch (error) {
-                                                        console.error(
-                                                            "Gagal menyimpan data statistik:",
-                                                            error
-                                                        );
-                                                        toast.error(
-                                                            "Gagal menyimpan perubahan",
-                                                            { id: toastId }
-                                                        );
-                                                    } finally {
-                                                        setIsSubmitting(false);
-                                                    }
-                                                }}
+                                                onSubmit={handleUpdateStatistik}
                                             />
                                         </div>
                                     )}

@@ -5,6 +5,8 @@ import { uploadImage } from "@/lib/uploadImageToSupabase";
 import { getImageUrl } from "@/lib/getImageURL";
 import { Loader2, Trash } from "lucide-react";
 import toast from "react-hot-toast";
+import useFormChanged from "@/hooks/useFormChanged";
+import UnsavedChangesDialog from "./UnsavedChangesDialog";
 
 export default function BeritaForm({ initialData, onCancel, onSubmit }) {
     const [form, setForm] = useState({
@@ -12,19 +14,32 @@ export default function BeritaForm({ initialData, onCancel, onSubmit }) {
         gambar: "",
         sumber: "",
         isi: "",
-        // tanggal dihapus, akan diatur otomatis
     });
+    const [originalForm, setOriginalForm] = useState(null);
     const [preview, setPreview] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+
+    // Track form changes
+    const isFormChanged = useFormChanged(originalForm, form);
 
     useEffect(() => {
         if (initialData) {
-            setForm({
+            const formData = {
                 ...initialData,
-                // tanggal tidak lagi disertakan di form
-            });
+            };
+            setForm(formData);
+            setOriginalForm(formData);
             setPreview(initialData.gambar || null);
+        } else {
+            // Set empty form as original for new entries
+            setOriginalForm({
+                judul: "",
+                gambar: "",
+                sumber: "",
+                isi: "",
+            });
         }
     }, [initialData]);
 
@@ -88,6 +103,15 @@ export default function BeritaForm({ initialData, onCancel, onSubmit }) {
         }
     }
 
+    // Handle cancel with unsaved changes
+    const handleCancelClick = () => {
+        if (isFormChanged) {
+            setShowUnsavedDialog(true);
+        } else {
+            onCancel();
+        }
+    };
+
     return (
         <div className="bg-white rounded-xl shadow-md flex flex-col h-[calc(100vh-12rem)]">
             {/* Header Fixed */}
@@ -98,7 +122,7 @@ export default function BeritaForm({ initialData, onCancel, onSubmit }) {
                 <div className="flex items-center gap-2">
                     <button
                         type="button"
-                        onClick={onCancel}
+                        onClick={handleCancelClick}
                         disabled={isSubmitting || uploading}
                         className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 transition text-sm font-medium disabled:opacity-50"
                     >
@@ -212,6 +236,16 @@ export default function BeritaForm({ initialData, onCancel, onSubmit }) {
                     </div>
                 </form>
             </div>
+
+            {/* Unsaved Changes Dialog */}
+            <UnsavedChangesDialog
+                isOpen={showUnsavedDialog}
+                onClose={() => setShowUnsavedDialog(false)}
+                onConfirm={() => {
+                    setShowUnsavedDialog(false);
+                    onCancel();
+                }}
+            />
         </div>
     );
 }
