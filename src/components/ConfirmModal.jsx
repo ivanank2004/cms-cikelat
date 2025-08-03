@@ -29,7 +29,7 @@ export default function ConfirmModal({
                         type="button"
                         onClick={onClose}
                         disabled={isLoading}
-                        className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 transition text-sm font-medium disabled:opacity-50"
+                        className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 transition text-sm text-gray-600 font-medium disabled:opacity-50"
                     >
                         {cancelText}
                     </button>
