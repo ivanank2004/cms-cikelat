@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import Image from 'next/image'
-import { useRouter, usePathname } from 'next/navigation'
+import Image from "next/image";
+import { useRouter, usePathname } from "next/navigation";
 import {
     LayoutDashboard,
     Info,
@@ -10,41 +10,76 @@ import {
     Megaphone,
     ShoppingBag,
     LogOut,
-} from 'lucide-react'
+    Settings, // Tambahkan icon Settings
+} from "lucide-react";
 
 export default function Sidebar() {
-    const router = useRouter()
-    const pathname = usePathname()
+    const router = useRouter();
+    const pathname = usePathname();
 
     const handleLogout = async () => {
         try {
-            await fetch('/api/logout', {
-                method: 'POST',
-                cache: 'no-store',
-            })
+            await fetch("/api/logout", {
+                method: "POST",
+                cache: "no-store",
+            });
 
-            window.location.href = '/'
+            window.location.href = "/";
         } catch (err) {
-            console.error('Gagal logout:', err)
-            alert('Terjadi kesalahan saat logout.')
+            console.error("Gagal logout:", err);
+            alert("Terjadi kesalahan saat logout.");
         }
-    }
+    };
 
     const navItems = [
-        { label: 'Dashboard Utama', path: '/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-        { label: 'Profil Desa', path: '/dashboard/profil', icon: <Info className="w-4 h-4" /> },
-        { label: 'Infografis', path: '/dashboard/infografis', icon: <BarChart3 className="w-4 h-4" /> },
-        { label: 'Berita', path: '/dashboard/berita', icon: <Newspaper className="w-4 h-4" /> },
-        { label: 'Pengumuman', path: '/dashboard/pengumuman', icon: <Megaphone className="w-4 h-4" /> },
-        { label: 'Belanja', path: '/dashboard/belanja', icon: <ShoppingBag className="w-4 h-4" /> },
-    ]
+        {
+            label: "Dashboard Utama",
+            path: "/dashboard",
+            icon: <LayoutDashboard className="w-4 h-4" />,
+        },
+        {
+            label: "Profil Desa",
+            path: "/dashboard/profil",
+            icon: <Info className="w-4 h-4" />,
+        },
+        {
+            label: "Infografis",
+            path: "/dashboard/infografis",
+            icon: <BarChart3 className="w-4 h-4" />,
+        },
+        {
+            label: "Berita",
+            path: "/dashboard/berita",
+            icon: <Newspaper className="w-4 h-4" />,
+        },
+        {
+            label: "Pengumuman",
+            path: "/dashboard/pengumuman",
+            icon: <Megaphone className="w-4 h-4" />,
+        },
+        {
+            label: "Belanja",
+            path: "/dashboard/belanja",
+            icon: <ShoppingBag className="w-4 h-4" />,
+        },
+        {
+            label: "Pengaturan",
+            path: "/dashboard/pengaturan",
+            icon: <Settings className="w-4 h-4" />,
+        }, // Menu baru
+    ];
 
     return (
         <div className="w-64 h-screen fixed top-0 left-0 bg-white shadow-md flex flex-col justify-between z-50">
             {/* Bagian atas berwarna */}
             <div className="bg-[#129990] text-white px-4 py-4">
                 <div className="flex items-center gap-3">
-                    <Image src="/img/sukabumi.png" alt="Logo" width={40} height={40} />
+                    <Image
+                        src="/img/sukabumi.png"
+                        alt="Logo"
+                        width={40}
+                        height={40}
+                    />
                     <div>
                         <p className="font-bold leading-5">Desa Cikelat</p>
                         <p className="text-xs">Dashboard CMS</p>
@@ -62,10 +97,11 @@ export default function Sidebar() {
                         <button
                             key={item.path}
                             onClick={() => router.push(item.path)}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition cursor-pointer ${pathname === item.path
-                                    ? 'bg-[#129990] text-white'
-                                    : 'text-gray-700 hover:bg-gray-100'
-                                }`}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition cursor-pointer ${
+                                pathname === item.path
+                                    ? "bg-[#129990] text-white"
+                                    : "text-gray-700 hover:bg-gray-100"
+                            }`}
                         >
                             {item.icon}
                             {item.label}
@@ -85,5 +121,5 @@ export default function Sidebar() {
                 </button>
             </div>
         </div>
-    )
+    );
 }

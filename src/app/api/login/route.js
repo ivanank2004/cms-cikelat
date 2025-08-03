@@ -1,50 +1,70 @@
-import { NextResponse } from 'next/server'
-import { Pool } from 'pg'
-import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
+import { NextResponse } from "next/server";
+import { Pool } from "pg";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
-// Inisialisasi koneksi database langsung di sini
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
         rejectUnauthorized: false,
     },
-})
+});
 
 export async function POST(req) {
+    const { username, password } = await req.json();
+    const client = await pool.connect();
+
     try {
-        const { username, password } = await req.json()
+        const result = await client.query(
+            "SELECT * FROM admin WHERE username = $1",
+            [username]
+        );
+        const admin = result.rows[0];
 
-        const query = 'SELECT * FROM admin WHERE username = $1 LIMIT 1'
-        const result = await pool.query(query, [username])
-
-        if (result.rowCount === 0) {
-            return NextResponse.json({ message: 'Akun tidak ditemukan' }, { status: 401 })
+        if (!admin) {
+            return NextResponse.json(
+                { message: "Username atau password salah" },
+                { status: 401 }
+            );
         }
 
-        const admin = result.rows[0]
-        const passwordMatch = await bcrypt.compare(password, admin.password)
+        const isMatch = await bcrypt.compare(password, admin.password);
 
-        if (!passwordMatch) {
-            return NextResponse.json({ message: 'Password salah' }, { status: 401 })
+        if (!isMatch) {
+            return NextResponse.json(
+                { message: "Username atau password salah" },
+                { status: 401 }
+            );
         }
 
-        const token = jwt.sign({ username: admin.username }, process.env.JWT_SECRET, {
-            expiresIn: '1d',
-        })
+        // Buat token JWT
+        const token = jwt.sign(
+            { id: admin.id, username: admin.username },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "1h", // Token berlaku selama 1 jam
+            }
+        );
 
-        const response = NextResponse.json({ message: 'Login berhasil' })
-        response.cookies.set('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            path: '/',
-            maxAge: 60 * 60 * 24, // 1 hari
-        })
+        // Buat respons JSON
+        const response = NextResponse.json({ message: "Login berhasil" });
 
-        return response
-    } catch (err) {
-        console.error('Login error:', err)
-        return NextResponse.json({ message: 'Terjadi kesalahan pada server' }, { status: 500 })
+        // Ubah nama cookie dari "auth_token" menjadi "token" agar sesuai dengan middleware
+        response.cookies.set("token", token, {
+            httpOnly: true, // Mencegah akses dari JavaScript sisi klien
+            secure: process.env.NODE_ENV !== "development", // Hanya kirim melalui HTTPS di produksi
+            maxAge: 60 * 60, // Masa berlaku cookie dalam detik (1 jam)
+            path: "/", // Cookie berlaku untuk seluruh situs
+        });
+
+        return response;
+    } catch (error) {
+        console.error("Login error:", error);
+        return NextResponse.json(
+            { error: "Terjadi kesalahan pada server" },
+            { status: 500 }
+        );
+    } finally {
+        client.release();
     }
 }
