@@ -12,7 +12,7 @@ export async function POST(req) {
     const { oldPassword, newPassword } = await req.json();
 
     // 1. Verifikasi token dan dapatkan ID admin dari cookie
-    const token = req.cookies.get("auth_token")?.value;
+    const token = req.cookies.get("token")?.value;
 
     if (!token) {
         return NextResponse.json(

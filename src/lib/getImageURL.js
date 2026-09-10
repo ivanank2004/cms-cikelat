@@ -4,7 +4,13 @@ export function getImageUrl(path) {
         return path;
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+
+    if (supabaseUrl?.startsWith("ey") && supabaseKey?.startsWith("http")) {
+        supabaseUrl = supabaseKey;
+    }
+
     if (!supabaseUrl) {
         console.error("NEXT_PUBLIC_SUPABASE_URL is not defined");
         return path;
